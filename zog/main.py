@@ -1,18 +1,42 @@
+"""
+Entrypoint for `zog`.
+
+Copyright (C) 2025 Nicholas M. Synovic.
+
+"""
+
 from pyzotero.zotero import Zotero
 from networkx import DiGraph
 import networkx as nx
-from typing import Any
 from collections import defaultdict
-import matplotlib.pyplot as plt
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
 
 def cli() -> Namespace:
+    """
+    Parse command-line arguments for the Zotero knowledge graph tool.
+
+    This CLI accepts arguments for accessing a Zotero library (either remote
+    via API or local), selecting a collection within that library, and
+    specifying an output location for the generated GraphML file.
+
+    Supported options:
+    - --library-id: Required Zotero library ID.
+    - --library-type: Type of library ("user" or "group"). Defaults to "user".
+    - --api-key: Zotero API key. Required unless using the --local flag.
+    - --local: Use local access instead of API. Overrides the need for --api-key.
+    - --collection-path: Path to the Zotero collection (e.g., "Projects/MyProject/Data").
+    - --output-path: File path to output the GraphML data.
+
+    Returns:
+        Namespace: Parsed command-line arguments.
+
+    """
     parser = ArgumentParser(
         prog="zog",
         description="ZOtero knowledge Graph.",
-        epilog="Copyright (c) Nicholas Synovic, 2025",
+        epilog="Copyright (C) 2025 Nicholas M. Synovic.",
     )
 
     parser.add_argument(
@@ -68,6 +92,24 @@ def cli() -> Namespace:
 
 
 def get_named_collection_key(collections: list[dict], name: str) -> str:
+    """
+    Retrieve the key of a Zotero collection by its name.
+
+    Iterates over a list of Zotero collection dictionaries to find a collection
+    with a matching name and returns its associated key.
+
+    Args:
+        collections (list[dict]): List of Zotero collection objects, where each
+            object is expected to have a "data" field containing a "name" key.
+        name (str): The name of the collection to search for.
+
+    Returns:
+        str: The unique key of the matching Zotero collection.
+
+    Raises:
+        KeyError: If no collection with the specified name is found.
+
+    """
     for collection in collections:
         collection_data: dict = collection["data"]
         if collection_data["name"] == name:
@@ -80,6 +122,29 @@ def get_collection_key_from_path(
     collections: list[dict],
     collection_path: str,
 ) -> str:
+    """
+    Retrieve the key of a Zotero collection from a hierarchical path.
+
+    Parses a collection path string (e.g., "Projects/Research/Data") and iteratively
+    resolves each level using `get_named_collection_key`. Assumes that each path
+    component corresponds to a collection name and that the final key corresponds to
+    the last collection in the path.
+
+    Note: This implementation assumes a flat collection list and does not verify
+    parent-child relationships between collections.
+
+    Args:
+        collections (list[dict]): List of Zotero collection objects, where each
+            object is expected to have a "data" field with a "name" key.
+        collection_path (str): Slash-separated path to the desired collection.
+
+    Returns:
+        str: The key corresponding to the final collection in the path.
+
+    Raises:
+        KeyError: If any part of the path does not match a collection name.
+
+    """
     key: str = ""
     split_collection_path: list[str] = collection_path.split(sep="/")
 
@@ -94,6 +159,25 @@ def get_collection_key_from_path(
 
 
 def create_relationships(items: list[dict]) -> list[tuple[str, str | None]]:
+    """
+    Create relationships between Zotero items based on their metadata.
+
+    For each item, this function attempts to extract related item keys from the
+    'relations' field. If no 'dc:relation' field is present, a self-relationship
+    is added (i.e., the item relates to itself).
+
+    Args:
+        items (list[dict]): A list of Zotero items. Each item is expected to contain
+            a "data" field with a "key" and optionally a "relations" -> "dc:relation"
+            list of related item URIs.
+
+    Returns:
+        list[tuple[str, str | None]]: A list of tuples representing
+            relationships, where the first element is the source item's key and
+            the second is the related item's key (or the same key if no relation
+            is defined).
+
+    """
     data: list[tuple[str, str | None]] = []
 
     item: dict
@@ -120,6 +204,21 @@ def create_relationships(items: list[dict]) -> list[tuple[str, str | None]]:
 def extract_nodes_from_relationships(
     relationships: list[tuple[str, str]],
 ) -> set[str]:
+    """
+    Extract unique node identifiers from a list of relationships.
+
+    This function takes a list of (source, target) relationship tuples and
+    returns a set of all unique node keys found in the relationships.
+
+    Args:
+        relationships (list[tuple[str, str]]): A list of tuples representing
+            edges between nodes, where each tuple contains a source and target
+            node key.
+
+    Returns:
+        set[str]: A set of unique node keys appearing in the relationships.
+
+    """
     data: set[str] = set()
 
     relationship: tuple[str, str]
@@ -151,12 +250,6 @@ def main() -> None:
     args: Namespace = cli()
 
     graph: DiGraph = DiGraph()
-
-    # library_id="6051933"
-    # library_type="user"
-    # api_key = ""
-    # local=True
-    # collection_path: str = "Projects/PRIME VFV/Datasets"
 
     zotero: Zotero = Zotero(
         library_id=args.library_id,
