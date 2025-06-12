@@ -60,7 +60,9 @@ def cli() -> Namespace:
     args = parser.parse_args()
 
     if not args.local and not args.api_key:
-        parser.error("The --api-key argument is required unless --local is specified.")
+        parser.error(
+            "The --api-key argument is required unless --local is specified."
+        )
 
     return args
 
@@ -100,7 +102,9 @@ def create_relationships(items: list[dict]) -> list[tuple[str, str | None]]:
         item_key: str = item_data["key"]
 
         try:
-            item_relations: dict[str, list[str]] = item_data["relations"]["dc:relation"]
+            item_relations: dict[str, list[str]] = item_data["relations"][
+                "dc:relation"
+            ]
         except KeyError:
             data.append((item_key, item_key))
             continue
@@ -113,7 +117,9 @@ def create_relationships(items: list[dict]) -> list[tuple[str, str | None]]:
     return data
 
 
-def extract_nodes_from_relationships(relationships: list[tuple[str, str]]) -> set[str]:
+def extract_nodes_from_relationships(
+    relationships: list[tuple[str, str]],
+) -> set[str]:
     data: set[str] = set()
 
     relationship: tuple[str, str]
@@ -164,7 +170,9 @@ def main() -> None:
         collections=zotero_collections,
         collection_path=args.collection_path,
     )
-    sub_collection_items: list[dict] = zotero.collection_items(sub_collection_key)
+    sub_collection_items: list[dict] = zotero.collection_items(
+        sub_collection_key
+    )
 
     graph_relationships: list[tuple[str, str]] = create_relationships(
         items=sub_collection_items
