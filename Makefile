@@ -15,12 +15,3 @@ create-dev:
 		poetry install; \
 		deactivate; \
 	)
-
-package:
-	pyinstaller --clean \
-		--onefile \
-		--add-data ./zog/_version:. \
-		--workpath ./pyinstaller \
-		--name zog \
-		--hidden-import zog \
-		zog/main.py
