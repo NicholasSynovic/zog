@@ -37,6 +37,7 @@ indent-width = 4
 target-version = "py310"
 
 [lint]
+preview = true
 select = [
     "YTT",
     "ANN",
@@ -83,7 +84,7 @@ select = [
     "FURB",
     "RUF",
 ]
-ignore = []
+ignore = ["D203", "D212", "COM812", "S404"]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 # fixable = ["ALL"]

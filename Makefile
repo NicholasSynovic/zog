@@ -8,7 +8,7 @@ create-dev:
 	pre-commit install
 	pre-commit autoupdate
 	rm -rf env
-	python3.10 -m venv env
+	python3.13 -m venv env
 	( \
 		. env/bin/activate; \
 		pip install -r requirements.txt; \
@@ -19,8 +19,8 @@ create-dev:
 package:
 	pyinstaller --clean \
 		--onefile \
-		--add-data ./src/_version:. \
+		--add-data ./zog/_version:. \
 		--workpath ./pyinstaller \
-		--name src \
-		--hidden-import src \
-		src/main.py
+		--name zog \
+		--hidden-import zog \
+		zog/main.py
